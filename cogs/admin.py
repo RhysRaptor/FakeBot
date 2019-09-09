@@ -32,13 +32,13 @@ class admin(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         if type(message.channel) is discord.DMChannel:
-            channel = self.bot.get_channel(620337251733340161)
+            channel = self.bot.get_channel(self.config["log_channel"])
             if message.author.id != 620216042651910165:
                 await channel.send(f"[DM] <{message.author.name}> {message.content}")
     
     @commands.Cog.listener()
     async def on_message_delete(self, message):
-        channel = self.bot.get_channel(620337251733340161)
+        channel = self.bot.get_channel(self.config["log_channel"])
         if message.author.id != 620216042651910165:
             await channel.send(f"[Delete] <{message.author.name}> {message.content}")
 

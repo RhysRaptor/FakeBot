@@ -22,6 +22,25 @@ def write_json(path, todump):
 def randomhex(): 
     return discord.Colour.from_rgb(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
+def ret_list_json(input_list, pageamount, page, printnumber):
+    length = len(input_list)
+    storage = []
+    leftbound = pageamount * (page - 1)
+    rightbound = leftbound + pageamount
+    if length < leftbound:
+        #await ctx.send("input is out of range")
+        return "Page out of range"
+
+    if length < rightbound:
+        rightbound = length
+
+    for i in range(rightbound - leftbound):
+        if printnumber is True:
+            storage.append(f"{str(i + leftbound + 1)}: ")
+        storage.append(f"{input_list[i + leftbound]}\n")
+
+    return "".join(storage)
+
 class memes(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -93,30 +112,28 @@ class memes(commands.Cog):
                 await ctx.send("You are not an admin or not the owner of the meme")
 
     @commands.command()
-    async def listmemes(self, ctx, page=1): #shit code, needs better code
-        '''Lists all memes'''
-        leftbound = 15 * (page - 1)
-        rightbound = leftbound + 15
+    async def listmemes(self, ctx, page=1):
+        '''(Page) Lists all memes'''
         parsed_json = load_json("meme.json")
         storage = []
         
         for meme in parsed_json:
             storage.append(meme)
 
-        toprint = [f"ListMemes, page {page}/{int((len(storage) + 14) / 15)}, total {len(storage)} memes\n-----\n"]
+        output = ret_list_json(storage, 15, page, False)
 
-        if len(storage) < leftbound:
-            await ctx.send("input is out of range")
-            return
+        await ctx.send(f"ListMemes, page {page}/{int((len(storage) + 14) / 15)}, total {len(storage)} memes\n-----\n{output}")
 
-        if len(storage) < rightbound:
-            rightbound = len(storage)
+    @commands.command(aliases=["listyt"])
+    async def ytlist(self, ctx, page=1):
+        '''(Page) list a description of all saved yt vids'''
+        parsed_json = load_json("yt.json")
+        storage = parsed_json["ytdesc"]
 
-        for i in range(rightbound - leftbound):
-            toprint.append(f"{storage[i + leftbound]}\n")
+        output = ret_list_json(storage, 15, page, True)
 
-        output = "".join(toprint)
-        await ctx.send(output)
+        await ctx.send(f"Youtube List, page {page}/{int((len(storage) + 14) / 15)}, total {len(storage)} videos\n-----\n{output}")
+
 
     @commands.command()
     async def meme(self, ctx, *, title):

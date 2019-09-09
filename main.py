@@ -111,13 +111,12 @@ async def unload(ctx, cog):
 
 @bot.event
 async def on_ready():
-    print('----------')
-    print('Logged in as:')
-    print(bot.user.name)
-    print(bot.user.id)
-    print('----------')
-    print('Currently joined servers:')
+    channel = bot.get_channel(config["log_channel"])
+    storage = [f'----------\nLogged in as:\n{bot.user.name}\n{bot.user.id}\n----------\nCurrently joined servers:\n']
     async for guild in bot.fetch_guilds(limit=150):
-        print(guild.name)
+        storage.append(f"{guild.name}\n")
+    output = "".join(storage)
+    await channel.send(output)
+    print(output)
 
 bot.run(secure["token"])
