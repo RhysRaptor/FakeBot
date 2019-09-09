@@ -124,17 +124,6 @@ class memes(commands.Cog):
 
         await ctx.send(f"ListMemes, page {page}/{int((len(storage) + 14) / 15)}, total {len(storage)} memes\n-----\n{output}")
 
-    @commands.command(aliases=["listyt"])
-    async def ytlist(self, ctx, page=1):
-        '''(Page) list a description of all saved yt vids'''
-        parsed_json = load_json("yt.json")
-        storage = parsed_json["ytdesc"]
-
-        output = ret_list_json(storage, 15, page, True)
-
-        await ctx.send(f"Youtube List, page {page}/{int((len(storage) + 14) / 15)}, total {len(storage)} videos\n-----\n{output}")
-
-
     @commands.command()
     async def meme(self, ctx, *, title):
         '''[title] - Displays a saved meme'''
@@ -173,6 +162,29 @@ class memes(commands.Cog):
             if number_local > len(yt):
                 number_local = len(yt)
             await ctx.send(f"Video: {number_local} / {len(yt)}\n{yt[number_local-1]}")
+        
+    @commands.command(aliases=["listyt"])
+    async def ytlist(self, ctx, page=1):
+        '''(Page) list a description of all saved yt vids'''
+        parsed_json = load_json("yt.json")
+        storage = parsed_json["ytdesc"]
+
+        output = ret_list_json(storage, 15, page, True)
+
+        await ctx.send(f"Youtube List, page {page}/{int((len(storage) + 14) / 15)}, total {len(storage)} videos\n-----\n{output}")
+
+    @commands.command(aliases=["reqyt", "ytrequest"])
+    async def ytreq(self, ctx, link, *, description):
+        '''[link] [desc] - request a yt video to be added'''
+        if len(link) > 50:
+            await ctx.send("Link is too long! max 50 chars")
+        elif len(description) > 50:
+            await ctx.send(f"Description is too long! max 50 chars ({len(description)} chars currently)")
+        else:
+            channel = self.bot.get_channel(self.config["log_channel"])
+            await channel.send(f'User Video Request!\nID: {str(ctx.message.author.id)}\nName: {ctx.message.author.name}\n\nVideo: {link}\nDesc: {description}\n\n```json\n"{link}"\n"{description}"\n```')
+            await ctx.message.add_reaction(self.reactemoji)
+
 
 def setup(bot):
     bot.add_cog(memes(bot))
