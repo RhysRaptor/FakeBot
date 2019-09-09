@@ -14,6 +14,11 @@ class utils(commands.Cog):
         await ctx.send("Pong!")
 
     @commands.command()
+    async def source(self, ctx):
+        '''Responds with a link to the source code of this bot'''
+        await ctx.send("https://github.com/suchmememanyskill/FakeBot")
+
+    @commands.command()
     async def message(self, ctx, *, message):
         '''[Message] Sends a message on the bots behalf'''
         await ctx.send(message)
