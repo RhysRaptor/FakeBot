@@ -1,0 +1,9 @@
+prefix: ">"
+admins:
+  - 249186838592487425
+  - 126747960972279808
+  - 328558251723456513
+autoload_cogs:
+  - utils
+  - memes
+  - admin

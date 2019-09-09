@@ -1,0 +1,3 @@
+secure.yml
+*.json
+cogs/__pycache__
