@@ -22,18 +22,6 @@ class music2(commands.Cog):
         self.volumefloat = 0.4
         self.queue = []
         self.nowplaying = None
-
-    def isinvoicejoin():
-        async def predicate(ctx):
-            if ctx.voice_client is None:
-                channel = ctx.message.author.voice.channel
-                if channel is not None:
-                    await channel.connect()
-                    return True
-                return False
-            else:
-                return True
-        return commands.check(predicate)
     
     def isinvoice():
         async def predicate(ctx):
@@ -43,9 +31,22 @@ class music2(commands.Cog):
                 return True
         return commands.check(predicate)        
 
+    async def autojoinvoice(self, ctx):
+        if ctx.voice_client is None:
+            channel = ctx.message.author.voice.channel
+            if channel is not None:
+                await channel.connect()
+                return True
+            return False
+        else:
+            return True
+
     def userinsamevoice():
         async def predicate(ctx):
-            return ctx.message.author.voice.channel.id == ctx.voice_client.channel.id
+            if ctx.message.author.voice is None or ctx.voice_client is None:
+                return False
+            else:
+                return ctx.message.author.voice.channel.id == ctx.voice_client.channel.id
         return commands.check(predicate) 
 
     async def ret_list(self, input_list, pageamount):
@@ -83,7 +84,6 @@ class music2(commands.Cog):
         await self.playmp3_internal(path)
 
     def queuefunc(self, error):
-        print(error)
         self.nowplaying = None
         if self.queue == []:
             self.bot.loop.create_task(self.vc.disconnect())
@@ -97,12 +97,13 @@ class music2(commands.Cog):
         self.vc.source.volume = self.volumefloat
 
     @commands.command()
-    @isinvoicejoin()
     async def play_mp3(self, ctx, path):
         '''todo: add desc'''
-        self.vc = ctx.voice_client
-        await self.playmp3_internal(path)
-        await ctx.message.add_reaction(self.reactemoji)
+        invoice = await self.autojoinvoice(ctx)
+        if invoice is True:
+            self.vc = ctx.voice_client
+            await self.playmp3_internal(path)
+            await ctx.message.add_reaction(self.reactemoji)
     
     @commands.command(aliases=["continue"])
     @userinsamevoice()
@@ -153,21 +154,22 @@ class music2(commands.Cog):
             await ctx.send("Bot isn't playing any music")
 
     @commands.command()
-    @isinvoicejoin()
     async def play(self, ctx, url):
-        self.guild_id = ctx.message.guild.id
-        self.vc = ctx.voice_client
-        lengthstring = await self.getyoutubestat(url, 'duration')
-        if int(lengthstring) > 600:
-            await ctx.send("Song is too long!")
-            return
-        if self.vc.is_playing() is True or self.vc.is_paused() is True:
-            self.queue.append(url)
-            await ctx.message.add_reaction(self.clock)
-            return
-        await ctx.send("Downloading song, please wait...")
-        await self.downloadandplay(url)
-        await ctx.message.add_reaction(self.reactemoji)
+        invoice = await self.autojoinvoice(ctx)
+        if invoice is True:
+            self.guild_id = ctx.message.guild.id
+            self.vc = ctx.voice_client
+            lengthstring = await self.getyoutubestat(url, 'duration')
+            if int(lengthstring) > 600:
+                await ctx.send("Song is too long!")
+                return
+            if self.vc.is_playing() is True or self.vc.is_paused() is True:
+                self.queue.append(url)
+                await ctx.message.add_reaction(self.clock)
+                return
+            await ctx.send("Downloading song, please wait...")
+            await self.downloadandplay(url)
+            await ctx.message.add_reaction(self.reactemoji)
 
     @commands.command(aliases=["nowplaying"])
     async def queue(self, ctx):
