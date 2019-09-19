@@ -8,3 +8,5 @@ autoload_cogs:
   - utils
   - memes
   - admin
+  - binary
+  - music2

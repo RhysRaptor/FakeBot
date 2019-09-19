@@ -98,6 +98,15 @@ async def load(ctx, cog):
         await ctx.send("This user isn't an admin")
 
 @bot.command()
+async def reload(ctx, cog):
+    """Reloads the selected cog."""
+    if ctx.message.author.id in config["admins"]:
+        ctx.bot.reload_extension('cogs.{}'.format(cog))
+        await ctx.send('✅ Cog succesfully reloaded.')
+    else:
+        await ctx.send("This user isn't an admin")
+
+@bot.command()
 async def unload(ctx, cog):
     if ctx.message.author.id in config["admins"]:
         if cog not in bot.loaded_cogs:

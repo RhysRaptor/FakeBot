@@ -55,7 +55,7 @@ class utils(commands.Cog):
                await ctx.send(message)
             self.isspamactive = False
 
-    @commands.command()
+    @commands.command(aliases=["playing"])
     async def game(self, ctx, *, string):
         '''[Message] - Change the bots "currently playing" message'''
         await self.bot.change_presence(activity=discord.Game(name=string))

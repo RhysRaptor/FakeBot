@@ -162,6 +162,22 @@ class memes(commands.Cog):
             if number_local > len(yt):
                 number_local = len(yt)
             await ctx.send(f"Video: {number_local} / {len(yt)}\n{yt[number_local-1]}")
+
+    @commands.command(aliases=["ytplay", "playyt"])
+    async def youtube_play(self, ctx, number=0):
+        number_local = number
+        parsed_json = load_json("yt.json")
+        yt = parsed_json["yt"]
+        if number_local < 1:
+            random_numb = random.randint(0, len(yt) - 1)
+            await ctx.invoke(self.bot.get_command('play'), yt[random_numb])
+            await ctx.send(f"Random number: {random_numb + 1} / {len(yt)}\n{yt[random_numb]}")
+        else:
+            if number_local > len(yt):
+                number_local = len(yt)
+            await ctx.invoke(self.bot.get_command('play'), yt[number_local - 1])
+            await ctx.send(f"Video: {number_local} / {len(yt)}\n{yt[number_local-1]}")
+                
         
     @commands.command(aliases=["listyt"])
     async def ytlist(self, ctx, page=1):

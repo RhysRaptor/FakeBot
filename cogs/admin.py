@@ -7,16 +7,26 @@ class admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = yaml.safe_load(open('config.yml'))
-    
-    @commands.command(aliases=["shutdown"])
-    async def stop(self, ctx):
+
+    def is_admin():
+        async def predicate(ctx):
+            yeet = yaml.safe_load(open('config.yml'))
+            return ctx.author.id in yeet["admins"]
+        return commands.check(predicate)
+        
+
+    @commands.command(aliases=["stopbot"])
+    @is_admin()
+    async def shutdown(self, ctx):
         '''Stops the bot'''
-        if ctx.message.author.id in self.config["admins"]:
-            await ctx.send("Cya!")
-            await asyncio.sleep(1)
-            await self.bot.logout()
-        else:
-            await ctx.send("This user isn't an admin")
+        await ctx.send("Cya!")
+        await asyncio.sleep(1)
+        await self.bot.logout()
+
+    @shutdown.error
+    async def shutdown_error(self, ctx, error):
+        if isinstance(error, commands.CheckFailure):
+            await ctx.send("You can't shut down the server")
 
     @commands.command(aliases=["userinfo"])
     async def whois(self, ctx, user_id: discord.User=None):
@@ -40,7 +50,7 @@ class admin(commands.Cog):
     async def on_message_delete(self, message):
         channel = self.bot.get_channel(self.config["log_channel"])
         if message.author.id != 620216042651910165:
-            await channel.send(f"[Delete] <{message.author.name}> {message.content}")
+            await channel.send(f"[Delete in {message.guild.name}] <{message.author.name}> {message.content}")
 
 def setup(bot):
     bot.add_cog(admin(bot))
