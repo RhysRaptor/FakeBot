@@ -17,11 +17,16 @@ import yaml
 from discord.ext import commands
 import discord
 import os
+from traceback import format_exception, format_exc
+import addons.jsonReader as jsonReader
 
 '''Bot framework that can dynamically load and unload cogs.'''
 
+jsonReader.GlobalJsonStorage = jsonReader.JsonStorage("./data.json")
+
 config = yaml.safe_load(open('config.yml'))
 secure = yaml.safe_load(open('secure.yml'))
+admin = jsonReader.JsonInteractor("admin")
 bot = commands.Bot(command_prefix=commands.when_mentioned_or(
     config['prefix']),
     description='')
@@ -39,6 +44,8 @@ def load_autoload_cogs():
     If your cogs need to reside in subfolders (ie. for config files) create a wrapper file in the cogs 
     directory to load the cog.
     '''
+    bot.load_extension("jishaku")
+    print("Loaded jishaku")
     for entry in os.listdir('cogs'):
         if entry.endswith('.py') and os.path.isfile('cogs/{}'.format(entry)) and entry[:-3] in config['autoload_cogs']:
             try:
@@ -80,7 +87,7 @@ async def list_cogs(ctx):
 @bot.command()
 async def load(ctx, cog):
     '''Try and load the selected cog.'''
-    if ctx.message.author.id in config["admins"]:
+    if str(ctx.message.author.id) in admin['admins']:
         if cog not in bot.unloaded_cogs:
             await ctx.send('⚠ WARNING: Cog appears not to be found in the available cogs list. Will try loading anyway.')
         if cog in bot.loaded_cogs:
@@ -100,7 +107,7 @@ async def load(ctx, cog):
 @bot.command()
 async def reload(ctx, cog):
     """Reloads the selected cog."""
-    if ctx.message.author.id in config["admins"]:
+    if str(ctx.message.author.id) in admin['admins']:
         ctx.bot.reload_extension('cogs.{}'.format(cog))
         await ctx.send('✅ Cog succesfully reloaded.')
     else:
@@ -108,7 +115,7 @@ async def reload(ctx, cog):
 
 @bot.command()
 async def unload(ctx, cog):
-    if ctx.message.author.id in config["admins"]:
+    if str(ctx.message.author.id) in admin['admins']:
         if cog not in bot.loaded_cogs:
             return await ctx.send('💢 Cog not loaded.')
         bot.unload_extension('cogs.{}'.format((cog)))
@@ -120,12 +127,37 @@ async def unload(ctx, cog):
 
 @bot.event
 async def on_ready():
-    channel = bot.get_channel(config["log_channel"])
     storage = [f'----------\nLogged in as:\n{bot.user.name}\n{bot.user.id}\n----------\nCurrently joined servers:\n']
     async for guild in bot.fetch_guilds(limit=150):
-        storage.append(f"{guild.name}\n")
+        storage.append(f"{guild.name} {guild.id}\n")
     output = "".join(storage)
-    await channel.send(output)
-    print(output)
+    await message_in_logs(output)
 
+async def message_in_logs(message):
+    channel = bot.get_channel(int(admin['logchannel']))
+    print(message)
+    for chunk in [message[i:i + 1800] for i in range(0, len(message), 1800)]:
+        await channel.send(f'```\n{chunk}\n```')
+
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, discord.ext.commands.MissingRequiredArgument):
+        await ctx.send("Command has missing arguments!")
+    elif isinstance(error, discord.ext.commands.errors.CheckFailure):
+        await ctx.send("Command checks failed. Check your permissions")
+    elif isinstance(error, discord.ext.commands.CommandNotFound):
+        # await ctx.send("this command doesn't exist, and neither do you")
+        await ctx.invoke(bot.get_command('runcommanderrquote'), name=ctx.message.content[1:].split(' ')[0])
+    elif isinstance(error, discord.ext.commands.CommandOnCooldown):
+        await ctx.send("Command is on cooldown. Try again in %.2f seconds" % error.retry_after)
+    else:
+        await ctx.send("An error occured!")
+        await message_in_logs(f"An error occured in a command:\n{str(error)}")
+
+@bot.event
+async def on_error(event, *args, **kwargs):
+    error = format_exc()
+    await message_in_logs(f"Error in {event}:\n\n{error}")
+
+bot.allowed_mentions = discord.AllowedMentions(everyone=False)
 bot.run(secure["token"])

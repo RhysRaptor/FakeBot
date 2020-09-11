@@ -2,3 +2,6 @@ secure.yml
 *.json
 cogs/__pycache__
 music
+addons/__pycache__/
+
+old/

@@ -1,11 +1,15 @@
 from discord.ext import commands
 import asyncio
 import discord
+import random
 
 class utils(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.reactemoji = '\N{THUMBS UP SIGN}'
+        self.erremoji = '\N{Octagonal Sign}'
+        self.angryemoji = '\N{Angry Face}'
+        self.toomuchinputemoji = '\N{Input Symbol for Symbols}'
         self.isspamactive = False
 
     @commands.command()
@@ -61,15 +65,28 @@ class utils(commands.Cog):
         await self.bot.change_presence(activity=discord.Game(name=string))
         await ctx.message.add_reaction(self.reactemoji)
 
+    @commands.command(aliases=["coin"])
+    async def coinflip(self, ctx):
+        '''Flip a coin'''
+        if random.randint(0, 1) == 0:
+            await ctx.send("Heads!")
+        else:
+            await ctx.send("Tails!")
 
-    #@commands.command()
-    #async def test(self, ctx, channel_id: discord.TextChannel, *, message):
-    #    await channel_id.send(message)
-
-    #@commands.command()
-    #async def test2(self, ctx, channel_id, *, message):
-    #    channel = self.bot.get_channel(int(channel_id))
-    #    await channel.send(message)
+    @commands.command(aliases=["rolldice"])
+    async def dice(self, ctx, amount: int = 1, eyes: int = 6):
+        '''[amount] [eyes] - yeet a dice'''
+        if eyes < 1 or amount < 1 or amount > 999 or eyes > (40**40):
+            await ctx.message.add_reaction(self.erremoji)
+        else:
+            rolls = []
+            for _ in range(0, amount):
+                rolls.append(random.randint(1, eyes))
+            outputstring = str(rolls)[1:-1]
+            if len(outputstring) > 1900:
+                await ctx.message.add_reaction(self.toomuchinputemoji)
+            else:
+                await ctx.send(f"{eyes}-sided dice roll (x{amount}) [sum: {sum(rolls)}]: {outputstring}")
 
 
 def setup(bot):

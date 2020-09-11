@@ -5,10 +5,19 @@ import yaml
 import functools
 import asyncio
 import os
+import random
+from addons.menu import MakeMenu
+from addons.utils import randomhex
+from addons.jsonReader import JsonInteractor
 
 dl_settings = {
 "outtmpl": "music/output.mp3",
-"format": "bestaudio/best"
+"format": "bestaudio/best",
+'postprocessors': [{
+     'key': 'FFmpegExtractAudio',
+     'preferredcodec': 'mp3',
+     'preferredquality': '192',
+}],
 }
 
 class music2(commands.Cog):
@@ -22,6 +31,7 @@ class music2(commands.Cog):
         self.volumefloat = 0.4
         self.queue = []
         self.nowplaying = None
+        self.ytlist = JsonInteractor("youtube")
     
     def isinvoice():
         async def predicate(ctx):
@@ -141,8 +151,8 @@ class music2(commands.Cog):
 
     @commands.command()
     @userinsamevoice()
-    async def volume(self, ctx, vol=50):
-        if 101 < vol < 1:
+    async def volume(self, ctx, vol : int=50):
+        if vol not in range(1, 101):
             await ctx.send("Volume needs to be between 1 and 100")
             return
         if self.vc is not None:
@@ -197,15 +207,68 @@ class music2(commands.Cog):
             self.queue.pop(pos - 1)
             await ctx.message.add_reaction(self.reactemoji)
 
+    @commands.command(aliases=["dlyt", "downloadyt", "ytdownload", "youtubedl", "dlyoutube", "youtubedownload"])
+    async def ytdl(self, ctx, url):
+        lengthstring = await self.getyoutubestat(url, 'duration')
+        if int(lengthstring) > 600:
+            await ctx.send("Song is too long!")
+            return
+        await ctx.send("Downloading song, please wait")
+        song_name = await self.getyoutubestat(url, 'title')
+        path = f"music/{ctx.message.guild.id}_{song_name}.mp3"
+        dl_settings["outtmpl"] = path
+        with youtube_dl.YoutubeDL(dl_settings) as ydl:
+            loop = asyncio.get_event_loop()
+            meth = functools.partial(ydl.download, [url])
+            await loop.run_in_executor(None, meth)
+        await ctx.send("Youtube video download:", file=discord.File(path))
+        if os.path.isfile(path) is True:
+            os.remove(path)
+
+    @commands.command(aliases=["yt"])
+    async def youtube(self, ctx, number=0):
+        '''Return a random youtube song in a pre-defined list'''
+        links = list(self.ytlist["links"].keys())
+        if number < 1:
+            random_numb = random.randint(0, len(links) - 1)
+            link = self.ytlist['links'][links[random_numb]]['link']
+            await ctx.send(f"Random number: {random_numb + 1} / {len(links)}\n{link}")
+        else:
+            if number > len(links):
+                number = len(links)
+            link = self.ytlist['links'][links[number - 1]]['link']
+            await ctx.send(f"Video: {number} / {len(links)}\n{link}")
+        
+        return link
+
+    @commands.command(aliases=["ytplay", "playyt"])
+    async def youtube_play(self, ctx, number=0):
+        '''Return a random youtube song in a pre-defined list'''
+        link = await self.youtube(ctx, number)
+        await ctx.invoke(self.bot.get_command('play'), link)
+                
+        
+    @commands.command(aliases=["listyt"])
+    async def ytlist(self, ctx):
+        '''list a description of all saved yt vids'''
+        menu = MakeMenu("Saved youtube music videos", list(self.ytlist["links"].keys()), randomhex(), 15)
+        await menu.start(ctx)
+
+    # TODO add yt adder
+
     @play_mp3.error
     async def play_mp3_error(self, ctx, error):
         if isinstance(error, commands.CheckFailure):
             await ctx.send("I'm not in voice and i can't join voice for some reason")
+    #@commands.command()
+    #async def fill_queue(self, ctx, amount : int=5):
+    #    if amount not in range(1, 11):
+    #        ctx.send("Can only add 1 to 10 songs!")
+    #        return
+    #    for 
+    #    lengthstring = await self.getyoutubestat(url, 'duration')
 
-    #notes
-    #get length of song before adding it to the queue
-    #is a good idea
-        
+
 
 def setup(bot):
     bot.add_cog(music2(bot))
