@@ -5,6 +5,7 @@ from datetime import datetime
 import random
 import yaml
 from addons.jsonReader import JsonInteractor
+from addons.utils import isAdmin, isAdminCheck, isGlobalAdmin, isGlobalAdminCheck, isOwnServerCheck
 
 class quote(commands.Cog):
     def __init__(self, bot):
@@ -15,20 +16,21 @@ class quote(commands.Cog):
         self.quotestartloop.start()
 
     @commands.command()
+    @isAdminCheck()
+    @isOwnServerCheck()
     async def addquote(self, ctx, *, quote):
-        if (str(ctx.author.id) in self.quotes["quoters"]):
-            self.quotes["quotes"].append(quote)
-            # write_json("quote.json", self.quotes)
-            self.quotes.save()
-            await ctx.send(f"Added `{quote}`")
-        else:
-            await ctx.send("You are not allowed to add quotes") 
+        self.quotes["quotes"].append(quote)
+        # write_json("quote.json", self.quotes)
+        self.quotes.save()
+        await ctx.send(f"Added `{quote}`")
 
     @commands.command()
+    @isOwnServerCheck()
     async def quotecount(self, ctx):
         await ctx.send(f"The bot has currently {len(self.quotes['quotes'])} quotes")
 
     @commands.command()
+    @isOwnServerCheck()
     async def forcequote(self, ctx, number=-1):
         if int(number) < 0:
             getquote = self.quotes["quotes"][random.randint(0, len(self.quotes["quotes"]) - 1)]

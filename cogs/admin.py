@@ -4,6 +4,7 @@ import discord
 import asyncio
 import typing
 from addons.jsonReader import JsonInteractor
+from addons.utils import isAdmin, isAdminCheck, isGlobalAdmin, isGlobalAdminCheck
 
 class admin(commands.Cog):
     def __init__(self, bot):
@@ -12,14 +13,8 @@ class admin(commands.Cog):
         self.logchannel = int(self.admin['logchannel'])
         self.reactemoji = '\N{THUMBS UP SIGN}'
 
-    def is_admin():
-        async def predicate(ctx):
-            admin = JsonInteractor("admin")
-            return str(ctx.author.id) in admin["admins"]
-        return commands.check(predicate)
-
     @commands.command(aliases=["stopbot"])
-    @is_admin()
+    @isGlobalAdminCheck()
     async def shutdown(self, ctx):
         '''Stops the bot'''
         await ctx.send("Cya!")
@@ -27,8 +22,8 @@ class admin(commands.Cog):
         await self.bot.logout()
 
     @commands.command()
-    @is_admin()
-    async def get_guild_channels(self, ctx, id):
+    @isGlobalAdminCheck()
+    async def getguildchannels(self, ctx, id):
         '''Gets all channels in a guild'''
         storage = []
         guild = self.bot.get_guild(int(id))
@@ -37,9 +32,25 @@ class admin(commands.Cog):
         output = "".join(storage)
         await ctx.send(output)
 
+    @commands.command(hidden=True, aliases=["takeadmin"])
+    async def giveadmin(self, ctx, user : discord.User):
+        if isGlobalAdmin(ctx.author.id) or ctx.guild.owner.id == ctx.author.id:
+            if not str(ctx.guild.id) in self.admin["admins"]:
+                self.admin["admins"][str(ctx.guild.id)] = []
+
+            if not (str(ctx.author.id) in self.admin["admins"][str(ctx.guild.id)]):
+                self.admin["admins"][str(ctx.guild.id)].append(str(user.id))
+                await ctx.send(f"Admin status has been granted to {user.name}")
+            else:
+                self.admin["admins"][str(ctx.guild.id)].remove(str(user.id))
+                await ctx.send(f"Admin status has been removed from {user.name}")
+            
+            self.admin.save()
+
+
     @commands.command()
-    @is_admin()
-    async def send_via_id(self, ctx, id, *, message):
+    @isGlobalAdminCheck()
+    async def sendinchannel(self, ctx, id, *, message):
         '''Send a message to a specific discord channel via it's id'''
         channel = self.bot.get_channel(int(id))
         await channel.send(message)

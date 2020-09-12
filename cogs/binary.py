@@ -70,6 +70,11 @@ class binary(commands.Cog):
 
 		colour = Colour.from_rgb(r, g, b)
 
+		posRole = getter(ctx.guild.roles, "-- Colors --")
+		if (posRole is None):
+			await ctx.send("I need a '-- Colors --' role to figure out where to place the roles")
+			return
+
 		userRole = getter(ctx.guild.roles, str(ctx.author.id))
 		if (userRole is None):
 			userRole = await ctx.guild.create_role(name=str(ctx.author.id), colour=colour)
@@ -78,9 +83,6 @@ class binary(commands.Cog):
 			return
 
 		posRole = getter(ctx.guild.roles, "-- Colors --")
-		if (posRole is None):
-			await ctx.send("I need a '-- Colors --' role to figure out where to place the roles")
-			return
 
 		onUserRole = getter(ctx.author.roles, str(ctx.author.id))
 		if (onUserRole is None):

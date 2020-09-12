@@ -7,7 +7,7 @@ import asyncio
 import os
 import random
 from addons.menu import MakeMenu
-from addons.utils import randomhex
+from addons.utils import randomhex, isAdminCheck, isOwnServerCheck, isGlobalAdminCheck
 from addons.jsonReader import JsonInteractor
 
 dl_settings = {
@@ -107,6 +107,8 @@ class music2(commands.Cog):
         self.vc.source.volume = self.volumefloat
 
     @commands.command()
+    @isGlobalAdminCheck()
+    @isOwnServerCheck()
     async def play_mp3(self, ctx, path):
         '''todo: add desc'''
         invoice = await self.autojoinvoice(ctx)
@@ -164,6 +166,7 @@ class music2(commands.Cog):
             await ctx.send("Bot isn't playing any music")
 
     @commands.command()
+    @isOwnServerCheck()
     async def play(self, ctx, url):
         invoice = await self.autojoinvoice(ctx)
         if invoice is True:
@@ -182,6 +185,7 @@ class music2(commands.Cog):
             await ctx.message.add_reaction(self.reactemoji)
 
     @commands.command(aliases=["nowplaying"])
+    @isOwnServerCheck()
     async def queue(self, ctx):
         if self.queue == []:
             if self.nowplaying is None:
@@ -196,6 +200,7 @@ class music2(commands.Cog):
             await ctx.send(f"List Queue, total {len(self.queue)}\nNow playing: {getytstring}\n-----\n{queuestring}")
 
     @commands.command(aliases=["del"])
+    @isOwnServerCheck()
     async def queue_del(self, ctx, pos=1):
         if self.queue == []:
             await ctx.send("Queue is empty!")
@@ -226,6 +231,7 @@ class music2(commands.Cog):
             os.remove(path)
 
     @commands.command(aliases=["yt"])
+    @isOwnServerCheck()
     async def youtube(self, ctx, number=0):
         '''Return a random youtube song in a pre-defined list'''
         links = list(self.ytlist["links"].keys())
@@ -242,6 +248,7 @@ class music2(commands.Cog):
         return link
 
     @commands.command(aliases=["ytplay", "playyt"])
+    @isOwnServerCheck()
     async def youtube_play(self, ctx, number=0):
         '''Return a random youtube song in a pre-defined list'''
         link = await self.youtube(ctx, number)
@@ -249,6 +256,7 @@ class music2(commands.Cog):
                 
         
     @commands.command(aliases=["listyt"])
+    @isOwnServerCheck()
     async def ytlist(self, ctx):
         '''list a description of all saved yt vids'''
         menu = MakeMenu("Saved youtube music videos", list(self.ytlist["links"].keys()), randomhex(), 15)

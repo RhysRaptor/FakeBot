@@ -6,6 +6,7 @@ import datetime
 import yaml
 import discord
 from addons.jsonReader import JsonInteractor
+from addons.utils import isAdminCheck
 
 def load_json(path):
     try:
@@ -28,12 +29,6 @@ class vote(commands.Cog):
         self.reactemoji = '\N{THUMBS UP SIGN}'
         self.erremoji = '\N{Octagonal Sign}'
 
-    def is_admin():
-        async def predicate(ctx):
-            admin = JsonInteractor("admin")
-            return str(ctx.author.id) in admin["admins"]
-        return commands.check(predicate)
-
     def is_vote_inactive():
         async def predicate(ctx):
             return ("Current vote" in load_json("vote.json")) == 0
@@ -45,7 +40,7 @@ class vote(commands.Cog):
         return commands.check(predicate)
     
     @commands.command()
-    @is_admin()
+    @isAdminCheck()
     @is_vote_inactive()
     async def startvote(self, ctx, name, maxnum: int, maxpp: int):
         self.timer = {}
@@ -141,7 +136,7 @@ class vote(commands.Cog):
         
     @commands.command()
     @is_vote_active()
-    @is_admin()
+    @isAdminCheck()
     async def wipeactivevote(self, ctx):
         self.timer = {}
         write_json("vote.json", self.timer)
@@ -149,7 +144,7 @@ class vote(commands.Cog):
 
     @commands.command()
     @is_vote_active()
-    @is_admin()
+    @isAdminCheck()
     async def voteAddEnum(self, ctx, number: int, *, enum):
         if (number > int(self.timer["Max vote num"]) or number <= 0):
             await ctx.send("Number out of range")

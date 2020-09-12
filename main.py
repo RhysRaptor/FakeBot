@@ -71,6 +71,7 @@ load_autoload_cogs()
 get_names_of_unloaded_cogs()
 
 @bot.command()
+@commands.is_owner()
 async def list_cogs(ctx):
     '''Lists all cogs and their status of loading.'''
     cog_list = commands.Paginator(prefix='', suffix='')
@@ -85,45 +86,39 @@ async def list_cogs(ctx):
         await ctx.send(page)
 
 @bot.command()
+@commands.is_owner()
 async def load(ctx, cog):
     '''Try and load the selected cog.'''
-    if str(ctx.message.author.id) in admin['admins']:
-        if cog not in bot.unloaded_cogs:
-            await ctx.send('⚠ WARNING: Cog appears not to be found in the available cogs list. Will try loading anyway.')
-        if cog in bot.loaded_cogs:
-            return await ctx.send('Cog already loaded.')
-        try:
-            bot.load_extension('cogs.{}'.format(cog))
-        except Exception as e:
-            await ctx.send('**💢 Could not load cog: An exception was raised. For your convenience, the exception will be printed below:**')
-            await ctx.send('```{}\n{}```'.format(type(e).__name__, e))
-        else:
-            bot.loaded_cogs.append(cog)
-            bot.unloaded_cogs.remove(cog)
-            await ctx.send('✅ Cog succesfully loaded.')
+    if cog not in bot.unloaded_cogs:
+        await ctx.send('⚠ WARNING: Cog appears not to be found in the available cogs list. Will try loading anyway.')
+    if cog in bot.loaded_cogs:
+        return await ctx.send('Cog already loaded.')
+    try:
+        bot.load_extension('cogs.{}'.format(cog))
+    except Exception as e:
+        await ctx.send('**💢 Could not load cog: An exception was raised. For your convenience, the exception will be printed below:**')
+        await ctx.send('```{}\n{}```'.format(type(e).__name__, e))
     else:
-        await ctx.send("This user isn't an admin")
+        bot.loaded_cogs.append(cog)
+        bot.unloaded_cogs.remove(cog)
+        await ctx.send('✅ Cog succesfully loaded.')
 
 @bot.command()
+@commands.is_owner()
 async def reload(ctx, cog):
     """Reloads the selected cog."""
-    if str(ctx.message.author.id) in admin['admins']:
-        ctx.bot.reload_extension('cogs.{}'.format(cog))
-        await ctx.send('✅ Cog succesfully reloaded.')
-    else:
-        await ctx.send("This user isn't an admin")
+    ctx.bot.reload_extension('cogs.{}'.format(cog))
+    await ctx.send('✅ Cog succesfully reloaded.')
 
 @bot.command()
+@commands.is_owner()
 async def unload(ctx, cog):
-    if str(ctx.message.author.id) in admin['admins']:
-        if cog not in bot.loaded_cogs:
-            return await ctx.send('💢 Cog not loaded.')
-        bot.unload_extension('cogs.{}'.format((cog)))
-        bot.loaded_cogs.remove(cog)
-        bot.unloaded_cogs.append(cog)
-        await ctx.send('✅ Cog succesfully unloaded.')
-    else:
-        await ctx.send("This user isn't an admin")
+    if cog not in bot.loaded_cogs:
+        return await ctx.send('💢 Cog not loaded.')
+    bot.unload_extension('cogs.{}'.format((cog)))
+    bot.loaded_cogs.remove(cog)
+    bot.unloaded_cogs.append(cog)
+    await ctx.send('✅ Cog succesfully unloaded.')
 
 @bot.event
 async def on_ready():
