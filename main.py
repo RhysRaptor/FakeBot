@@ -29,7 +29,8 @@ secure = yaml.safe_load(open('secure.yml'))
 admin = jsonReader.JsonInteractor("admin")
 bot = commands.Bot(command_prefix=commands.when_mentioned_or(
     config['prefix']),
-    description='')
+    description='',
+    intents = discord.Intents().all())
 
 bot.loaded_cogs = []
 bot.unloaded_cogs = []

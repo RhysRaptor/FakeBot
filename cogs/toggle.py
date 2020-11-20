@@ -160,7 +160,7 @@ class toggle(commands.Cog):
 
     @commands.command(aliases=["editrole"])
     @isAdminCheck()
-    async def toggleedit(self, ctx, search, key, value):
+    async def toggleedit(self, ctx, search, key, *, value):
         name = await self.parseSearch(ctx, search)
         if (name is None):
             return

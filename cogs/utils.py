@@ -2,6 +2,9 @@ from discord.ext import commands
 import asyncio
 import discord
 import random
+import json
+from addons.utils import isAdmin, isAdminCheck, isGlobalAdmin, isGlobalAdminCheck
+import typing
 
 class utils(commands.Cog):
     def __init__(self, bot):
@@ -41,8 +44,21 @@ class utils(commands.Cog):
     
     @commands.command()
     async def dm(self, ctx, user_id: discord.User, *, message):
-        '''[ID] [Message] DM a user with a specific message'''
+        '''[Ping] [Message] DM a user with a specific message'''
         await user_id.send(message)
+        await ctx.message.add_reaction(self.reactemoji)
+    
+    @commands.command()
+    @isAdminCheck()
+    async def dmuser(self, ctx, user_id: typing.Union[discord.User, int]=None, *, message):
+        if isinstance(user_id, int):
+            user = await self.bot.fetch_user(user_id)
+        elif isinstance(user_id, discord.User):
+            user = user_id
+        else:
+            user = ctx.author
+
+        await user.send(message)
         await ctx.message.add_reaction(self.reactemoji)
 
     @commands.command()
@@ -63,6 +79,14 @@ class utils(commands.Cog):
     async def game(self, ctx, *, string):
         '''[Message] - Change the bots "currently playing" message'''
         await self.bot.change_presence(activity=discord.Game(name=string))
+        await ctx.message.add_reaction(self.reactemoji)
+
+    @commands.command()
+    async def nick(self, ctx, *, name : str):
+        if (len(name) > 32):
+            await ctx.send("Provided name is too long")
+        
+        await ctx.guild.me.edit(nick=name)
         await ctx.message.add_reaction(self.reactemoji)
 
     @commands.command(aliases=["coin"])
@@ -87,7 +111,6 @@ class utils(commands.Cog):
                 await ctx.message.add_reaction(self.toomuchinputemoji)
             else:
                 await ctx.send(f"{eyes}-sided dice roll (x{amount}) [sum: {sum(rolls)}]: {outputstring}")
-
 
 def setup(bot):
     bot.add_cog(utils(bot))

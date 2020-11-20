@@ -28,7 +28,7 @@ class music2(commands.Cog):
         self.config = yaml.safe_load(open('config.yml'))
         self.reactemoji = '\N{THUMBS UP SIGN}'
         self.clock = '\N{STOPWATCH}'
-        self.volumefloat = 0.4
+        self.volumefloat = 0.2
         self.queue = []
         self.nowplaying = None
         self.ytlist = JsonInteractor("youtube")
@@ -173,7 +173,7 @@ class music2(commands.Cog):
             self.guild_id = ctx.message.guild.id
             self.vc = ctx.voice_client
             lengthstring = await self.getyoutubestat(url, 'duration')
-            if int(lengthstring) > 600:
+            if int(lengthstring) > 900:
                 await ctx.send("Song is too long!")
                 return
             if self.vc.is_playing() is True or self.vc.is_paused() is True:
@@ -263,6 +263,25 @@ class music2(commands.Cog):
         await menu.start(ctx)
 
     # TODO add yt adder
+
+    @commands.command()
+    @isAdminCheck()
+    @isOwnServerCheck()
+    async def ytadd(self, ctx, name, video):
+        '''Add a song to the db'''
+        if name in self.ytlist["links"]:
+            await ctx.send("This song already exists in the db")
+            return
+
+        lengthstring = await self.getyoutubestat(video, 'duration')
+        if int(lengthstring) > 600:
+            await ctx.send("Song is too long!")
+            return
+
+        self.ytlist["links"][name] = {"owner": str(ctx.author.id), "link": video}
+        self.ytlist.save()
+        await ctx.message.add_reaction(self.reactemoji)
+        
 
     @play_mp3.error
     async def play_mp3_error(self, ctx, error):

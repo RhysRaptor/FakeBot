@@ -38,7 +38,7 @@ class admin(commands.Cog):
             if not str(ctx.guild.id) in self.admin["admins"]:
                 self.admin["admins"][str(ctx.guild.id)] = []
 
-            if not (str(ctx.author.id) in self.admin["admins"][str(ctx.guild.id)]):
+            if not (str(user.id) in self.admin["admins"][str(ctx.guild.id)]):
                 self.admin["admins"][str(ctx.guild.id)].append(str(user.id))
                 await ctx.send(f"Admin status has been granted to {user.name}")
             else:
@@ -89,6 +89,10 @@ class admin(commands.Cog):
     
     @commands.Cog.listener()
     async def on_message_delete(self, message):
+        print(message.guild.id)
+        if message.guild.id != 381588351653904385:
+            return
+
         channel = self.bot.get_channel(self.logchannel)
         if not message.author.bot:
             await self.message_in_logs(f"[Delete in {message.guild.name}] <{message.author.name}> {message.content}")
